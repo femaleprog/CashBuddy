@@ -1,73 +1,101 @@
-# React + TypeScript + Vite
+# Finance AI 💹
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered financial dashboard that helps users track their portfolio, analyze market news, and get intelligent insights about their investments.
 
-Currently, two official plugins are available:
+![Finance AI Dashboard](https://img.shields.io/badge/Status-Active-brightgreen) ![React](https://img.shields.io/badge/React-18-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![Vite](https://img.shields.io/badge/Vite-7.0-purple)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+### 📊 Interactive Stock Chart
+- Real-time tracking of **S&P 500** and **NASDAQ** indices
+- Multiple timeframe views (1D, 1W, 1M, 3M, 1Y)
+- Beautiful TradingView-inspired design with smooth animations
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📰 Smart News Feed
+- Categorized financial news (Business, Tech, Politics, Economy)
+- Impact analysis badges showing market effect
+- **One-click AI analysis** - Ask "How does this affect my portfolio?"
 
-## Expanding the ESLint configuration
+### 💼 Portfolio Dashboard
+- Total portfolio value with daily performance
+- Top holdings with live price changes
+- Performance metrics (1D, 1W, 1M, YTD)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🤖 AI Advisor
+- Conversational AI for portfolio insights
+- Context-aware responses based on market news
+- Quick prompt suggestions for common queries
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Category | Technology |
+|----------|------------|
+| Framework | React 18 + TypeScript |
+| Build Tool | Vite |
+| Styling | Tailwind CSS |
+| Charts | Recharts |
+| Animations | Framer Motion |
+| Icons | Lucide React |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/CashBuddy.git
+
+# Navigate to project directory
+cd CashBuddy
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app will be available at `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+## 📁 Project Structure
+
+```
+src/
+├── components/
+│   ├── Dashboard.tsx      # Main layout
+│   ├── StockChart.tsx     # Interactive chart
+│   ├── EventList.tsx      # News feed
+│   ├── Portfolio.tsx      # Holdings view
+│   ├── AIAdvisor.tsx      # Chat interface
+│   └── Sidebar.tsx        # Navigation
+├── data/
+│   └── mockStockData.ts   # Stock data generator
+├── types/
+│   └── stockTypes.ts      # TypeScript interfaces
+└── index.css              # Design system
+```
+
+## 🎨 Design Philosophy
+
+- **Modern & Spacious**: TradingView-inspired layout with generous spacing
+- **Dark Mode First**: Easy on the eyes for extended use
+- **Soft Surfaces**: Subtle glassmorphism effects without heavy borders
+- **Pink/Purple Accent**: Refined, non-masculine aesthetic
+
+## 📝 License
+
+MIT License - feel free to use this project for learning and development.
+
+---
+
+Built with ❤️ using React and TypeScript
