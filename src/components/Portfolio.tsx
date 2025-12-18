@@ -1,5 +1,6 @@
-import React from 'react';
-import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { TrendingUp, TrendingDown, Wallet, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Holding {
     symbol: string;
@@ -8,6 +9,11 @@ interface Holding {
     price: number;
     change: number;
     changePercent: number;
+}
+
+interface PortfolioProps {
+    highlightedHoldings?: string[];
+    scenarioDelta?: number;
 }
 
 const MOCK_HOLDINGS: Holding[] = [
@@ -24,10 +30,24 @@ const PERFORMANCE = [
     { label: 'YTD', value: 18.45 },
 ];
 
-export const Portfolio: React.FC = () => {
+export const Portfolio: React.FC<PortfolioProps> = ({ highlightedHoldings = [], scenarioDelta }) => {
+    const holdingRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const totalValue = MOCK_HOLDINGS.reduce((sum, h) => sum + h.shares * h.price, 0);
     const todayChange = MOCK_HOLDINGS.reduce((sum, h) => sum + h.shares * h.change, 0);
     const todayChangePercent = (todayChange / (totalValue - todayChange)) * 100;
+
+    // Scroll to highlighted holdings
+    useEffect(() => {
+        if (highlightedHoldings.length > 0) {
+            const firstHighlighted = highlightedHoldings[0];
+            const element = holdingRefs.current.get(firstHighlighted);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [highlightedHoldings]);
+
+    const isHighlighted = (symbol: string) => highlightedHoldings.includes(symbol);
 
     return (
         <div className="modern-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -52,7 +72,7 @@ export const Portfolio: React.FC = () => {
             {/* Total Value */}
             <div style={{ padding: '16px', background: 'rgba(219,216,227,0.04)', borderRadius: '12px' }}>
                 <p style={{ fontSize: '12px', color: 'rgba(219,216,227,0.65)', marginBottom: '4px' }}>Total Value</p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '28px', fontWeight: 700, color: '#fff' }}>
                         ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
@@ -68,6 +88,30 @@ export const Portfolio: React.FC = () => {
                         {todayChange >= 0 ? '+' : ''}{todayChangePercent.toFixed(2)}% today
                     </span>
                 </div>
+
+                {/* Scenario Delta */}
+                {scenarioDelta !== undefined && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        style={{
+                            marginTop: '12px',
+                            padding: '10px 14px',
+                            background: scenarioDelta >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        <AlertCircle style={{ width: '16px', height: '16px', color: scenarioDelta >= 0 ? '#4ade80' : '#f87171' }} />
+                        <span style={{ fontSize: '13px', color: '#fff' }}>
+                            Projected scenario: <strong style={{ color: scenarioDelta >= 0 ? '#4ade80' : '#f87171' }}>
+                                {scenarioDelta >= 0 ? '+' : ''}{scenarioDelta.toFixed(2)}%
+                            </strong> portfolio change
+                        </span>
+                    </motion.div>
+                )}
             </div>
 
             {/* Performance Pills */}
@@ -98,15 +142,23 @@ export const Portfolio: React.FC = () => {
                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(219,216,227,0.75)', marginBottom: '12px' }}>Top Holdings</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {MOCK_HOLDINGS.map(holding => (
-                        <div key={holding.symbol} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px',
-                            background: 'rgba(53,47,68,0.5)',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(219,216,227,0.06)'
-                        }}>
+                        <motion.div
+                            key={holding.symbol}
+                            ref={(el) => { if (el) holdingRefs.current.set(holding.symbol, el); }}
+                            animate={isHighlighted(holding.symbol) ? { scale: [1, 1.02, 1] } : {}}
+                            transition={{ duration: 0.5 }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px',
+                                background: isHighlighted(holding.symbol) ? 'rgba(236,72,153,0.15)' : 'rgba(53,47,68,0.5)',
+                                borderRadius: '12px',
+                                border: isHighlighted(holding.symbol) ? '1px solid rgba(236,72,153,0.4)' : '1px solid rgba(219,216,227,0.06)',
+                                boxShadow: isHighlighted(holding.symbol) ? '0 0 20px rgba(236,72,153,0.2)' : 'none',
+                                transition: 'all 0.3s ease',
+                            }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <div style={{
                                     width: '36px',
@@ -123,7 +175,21 @@ export const Portfolio: React.FC = () => {
                                     {holding.symbol.slice(0, 2)}
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{holding.symbol}</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{holding.symbol}</p>
+                                        {isHighlighted(holding.symbol) && (
+                                            <span style={{
+                                                fontSize: '10px',
+                                                padding: '2px 8px',
+                                                borderRadius: '999px',
+                                                background: 'rgba(236,72,153,0.2)',
+                                                color: '#ec4899',
+                                                fontWeight: 600,
+                                            }}>
+                                                IMPACTED
+                                            </span>
+                                        )}
+                                    </div>
                                     <p style={{ fontSize: '11px', color: 'rgba(219,216,227,0.6)' }}>{holding.shares} shares</p>
                                 </div>
                             </div>
@@ -137,7 +203,7 @@ export const Portfolio: React.FC = () => {
                                     {holding.change >= 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
