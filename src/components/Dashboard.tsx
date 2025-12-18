@@ -96,30 +96,16 @@ export const Dashboard: React.FC = () => {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#2A2438', color: '#DBD8E3' }}>
+        <div className="dashboard-root">
             {/* CSS Grid Layout */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: '240px 1fr 380px',
-                    height: '100vh',
-                    overflow: 'hidden',
-                }}
-            >
+            <div className="dashboard-grid">
                 {/* Sidebar */}
-                <div style={{ height: '100vh', overflowY: 'auto', borderRight: '1px solid rgba(219,216,227,0.08)' }}>
+                <aside className="sidebar-container">
                     <Sidebar />
-                </div>
+                </aside>
 
                 {/* Main Content */}
-                <main style={{
-                    height: '100vh',
-                    overflowY: 'auto',
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '24px',
-                }}>
+                <main className="main-content">
                     {/* Chart */}
                     <StockChart
                         sp500={stockData.sp500}
@@ -129,17 +115,19 @@ export const Dashboard: React.FC = () => {
                     />
 
                     {/* News + Portfolio Row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', flex: 1, minHeight: 0 }}>
+                    <div className="content-row">
                         <EventList onAskAI={handleAskAI} />
-                        <Portfolio
-                            highlightedHoldings={highlightedHoldings}
-                            scenarioDelta={scenarioDelta}
-                        />
+                        <div className="portfolio-container">
+                            <Portfolio
+                                highlightedHoldings={highlightedHoldings}
+                                scenarioDelta={scenarioDelta}
+                            />
+                        </div>
                     </div>
                 </main>
 
                 {/* Right Panel - AI Chat */}
-                <div className="right-panel" style={{ height: '100vh', overflow: 'hidden', padding: '24px', borderLeft: '1px solid rgba(219,216,227,0.08)' }}>
+                <aside className="chat-panel">
                     <AIAdvisor
                         ref={aiAdvisorRef}
                         externalMessage={aiMessage}
@@ -148,7 +136,7 @@ export const Dashboard: React.FC = () => {
                         onHighlightHoldings={handleHighlightHoldings}
                         onSelectNews={handleSelectNews}
                     />
-                </div>
+                </aside>
             </div>
 
             {/* Toast Notification */}
@@ -160,9 +148,105 @@ export const Dashboard: React.FC = () => {
 
             {/* Responsive Styles */}
             <style>{`
-        @media (max-width: 1400px) {
-          .grid { grid-template-columns: 240px 1fr !important; }
-          .right-panel { display: none; }
+        .dashboard-root {
+          min-height: 100vh;
+          background: #2A2438;
+          color: #DBD8E3;
+          overflow-x: hidden;
+        }
+
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: 220px 1fr 360px;
+          height: 100vh;
+          overflow: hidden;
+          max-width: 100vw;
+        }
+
+        .sidebar-container {
+          height: 100vh;
+          overflow-y: auto;
+          border-right: 1px solid rgba(219,216,227,0.08);
+          min-width: 0;
+        }
+
+        .main-content {
+          height: 100vh;
+          overflow-y: auto;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          min-width: 0;
+        }
+
+        .content-row {
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          gap: 20px;
+          flex: 1;
+          min-height: 0;
+        }
+
+        .portfolio-container {
+          min-width: 0;
+        }
+
+        .chat-panel {
+          height: 100vh;
+          overflow: hidden;
+          padding: 20px;
+          border-left: 1px solid rgba(219,216,227,0.08);
+          min-width: 0;
+        }
+
+        /* Large screens: 1400px+ */
+        @media (min-width: 1400px) {
+          .dashboard-grid {
+            grid-template-columns: 240px 1fr 380px;
+          }
+          .content-row {
+            grid-template-columns: 1fr 340px;
+          }
+          .main-content {
+            padding: 24px;
+            gap: 24px;
+          }
+        }
+
+        /* Medium screens: hide chat panel */
+        @media (max-width: 1200px) {
+          .dashboard-grid {
+            grid-template-columns: 200px 1fr;
+          }
+          .chat-panel {
+            display: none;
+          }
+          .content-row {
+            grid-template-columns: 1fr 280px;
+          }
+        }
+
+        /* Small screens: stack layout */
+        @media (max-width: 900px) {
+          .dashboard-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+          }
+          .sidebar-container {
+            display: none;
+          }
+          .main-content {
+            height: auto;
+            min-height: 100vh;
+            padding: 16px;
+          }
+          .content-row {
+            grid-template-columns: 1fr;
+          }
+          .portfolio-container {
+            order: -1;
+          }
         }
       `}</style>
         </div>
