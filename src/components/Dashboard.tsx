@@ -1,16 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sidebar } from './Sidebar';
 import { StockChart } from './StockChart';
-import { EventList } from './EventList';
+import { EventList, NEWS_DATA, type NewsContext } from './EventList';
 import { AIAdvisor, type AIAdvisorHandle } from './AIAdvisor';
 import { Portfolio } from './Portfolio';
 import { Toast } from './Toast';
 import { generateMockStockData } from '../data/mockStockData';
 import { type StockData } from '../types/stockTypes';
 
+const IMPACTED_HOLDINGS_MAP: Record<string, string[]> = {
+    'regulation': ['AAPL', 'GOOGL', 'MSFT'],
+    'ai': ['NVDA', 'MSFT'],
+    'fed': ['AAPL', 'MSFT'],
+    'supply': ['AAPL'],
+};
+
 export const Dashboard: React.FC = () => {
     const [stockData, setStockData] = useState<{ sp500: StockData; nasdaq: StockData } | null>(null);
     const [aiMessage, setAiMessage] = useState<string | undefined>();
+    const [newsContext, setNewsContext] = useState<NewsContext | undefined>();
     const [highlightedHoldings, setHighlightedHoldings] = useState<string[]>([]);
     const [scenarioActive, setScenarioActive] = useState(false);
     const [scenarioType, setScenarioType] = useState<'hedge' | 'reduce' | 'alert' | undefined>();
@@ -24,42 +32,54 @@ export const Dashboard: React.FC = () => {
         setStockData(data);
     }, []);
 
-    const handleAskAI = (question: string) => {
+    const handleAskAI = useCallback((question: string, context: NewsContext) => {
+        setNewsContext(context);
         setAiMessage(question);
         setTimeout(() => setAiMessage(undefined), 100);
-    };
+    }, []);
+
+    const handleSelectNews = useCallback((newsKey: string) => {
+        const newsItem = NEWS_DATA.find(n => n.analysisKey === newsKey);
+        if (newsItem) {
+            const context: NewsContext = {
+                headline: newsItem.title,
+                category: newsItem.category,
+                source: newsItem.source,
+                impactScore: newsItem.impact,
+                impactedHoldings: IMPACTED_HOLDINGS_MAP[newsItem.analysisKey] || [],
+                analysisKey: newsItem.analysisKey,
+            };
+            handleAskAI(`How does "${newsItem.title}" impact my portfolio?`, context);
+        }
+    }, [handleAskAI]);
 
     const handleHighlightHoldings = (symbols: string[]) => {
         setHighlightedHoldings(symbols);
-        // Clear after 10 seconds
         setTimeout(() => setHighlightedHoldings([]), 10000);
     };
 
-    const handleAction = (action: string, _holdings: string[]) => {
+    const handleAction = (_action: string, _holdings: string[]) => {
         setScenarioActive(true);
-        setScenarioType(action as 'hedge' | 'reduce' | 'alert');
+        setScenarioType(_action as 'hedge' | 'reduce' | 'alert');
 
-        // Calculate scenario delta based on action
         let delta = 0;
-        if (action === 'hedge') {
-            delta = -2.5; // Hedge reduces exposure
-        } else if (action === 'reduce') {
-            delta = -5.2; // Reduce cuts more
-        } else if (action === 'alert') {
-            delta = 0; // Alert doesn't change anything
+        if (_action === 'hedge') {
+            delta = -2.5;
+        } else if (_action === 'reduce') {
+            delta = -5.2;
+        } else if (_action === 'alert') {
+            delta = 0;
         }
         setScenarioDelta(delta);
 
-        // Show toast
         const actionLabels: Record<string, string> = {
             hedge: 'Hedge scenario applied to chart',
             reduce: 'Reduced exposure scenario applied',
             alert: 'Price alert set for impacted holdings',
         };
-        setToastMessage(actionLabels[action] || 'Scenario applied');
+        setToastMessage(actionLabels[_action] || 'Scenario applied');
         setToastVisible(true);
 
-        // Clear scenario after 30 seconds
         setTimeout(() => {
             setScenarioActive(false);
             setScenarioType(undefined);
@@ -123,8 +143,10 @@ export const Dashboard: React.FC = () => {
                     <AIAdvisor
                         ref={aiAdvisorRef}
                         externalMessage={aiMessage}
+                        newsContext={newsContext}
                         onAction={handleAction}
                         onHighlightHoldings={handleHighlightHoldings}
+                        onSelectNews={handleSelectNews}
                     />
                 </div>
             </div>

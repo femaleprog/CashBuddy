@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Globe, Briefcase, Cpu, Building2, DollarSign, TrendingUp, TrendingDown, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface NewsItem {
+export interface NewsItem {
     id: string;
     title: string;
     source: string;
@@ -11,13 +11,23 @@ interface NewsItem {
     impact: number;
     sentiment: 'positive' | 'negative' | 'neutral';
     summary: string;
+    analysisKey: string;
+}
+
+export interface NewsContext {
+    headline: string;
+    category: string;
+    source: string;
+    impactScore: number;
+    impactedHoldings: string[];
+    analysisKey: string;
 }
 
 interface EventListProps {
-    onAskAI?: (newsTitle: string) => void;
+    onAskAI?: (question: string, context: NewsContext) => void;
 }
 
-const NEWS_DATA: NewsItem[] = [
+export const NEWS_DATA: NewsItem[] = [
     {
         id: '1',
         title: "Breaking: New EU Tech Regulation Announced",
@@ -26,7 +36,8 @@ const NEWS_DATA: NewsItem[] = [
         category: "Politics",
         impact: 75,
         sentiment: 'negative',
-        summary: "European Commission announces strict data privacy rules affecting tech companies."
+        summary: "European Commission announces strict data privacy rules affecting tech companies.",
+        analysisKey: 'regulation',
     },
     {
         id: '2',
@@ -36,7 +47,8 @@ const NEWS_DATA: NewsItem[] = [
         category: "Technology",
         impact: 85,
         sentiment: 'positive',
-        summary: "Venture capital firms predict AI startup valuations could triple by end of year."
+        summary: "Venture capital firms predict AI startup valuations could triple by end of year.",
+        analysisKey: 'ai',
     },
     {
         id: '3',
@@ -46,7 +58,8 @@ const NEWS_DATA: NewsItem[] = [
         category: "Economy",
         impact: 40,
         sentiment: 'neutral',
-        summary: "Federal Reserve signals intention to maintain current interest rates through Q2."
+        summary: "Federal Reserve signals intention to maintain current interest rates through Q2.",
+        analysisKey: 'fed',
     },
     {
         id: '4',
@@ -56,9 +69,17 @@ const NEWS_DATA: NewsItem[] = [
         category: "Business",
         impact: 30,
         sentiment: 'positive',
-        summary: "Manufacturing efficiency improvements drive cost reductions globally."
+        summary: "Manufacturing efficiency improvements drive cost reductions globally.",
+        analysisKey: 'supply',
     }
 ];
+
+const IMPACTED_HOLDINGS_MAP: Record<string, string[]> = {
+    'regulation': ['AAPL', 'GOOGL', 'MSFT'],
+    'ai': ['NVDA', 'MSFT'],
+    'fed': ['AAPL', 'MSFT'],
+    'supply': ['AAPL'],
+};
 
 const CATEGORIES = [
     { label: 'All', value: 'All', icon: Globe },
@@ -85,9 +106,18 @@ export const EventList: React.FC<EventListProps> = ({ onAskAI }) => {
         ? NEWS_DATA
         : NEWS_DATA.filter(item => item.category === activeCategory);
 
-    const handleAskAI = (newsTitle: string) => {
+    const handleAskAI = (item: NewsItem) => {
+        const context: NewsContext = {
+            headline: item.title,
+            category: item.category,
+            source: item.source,
+            impactScore: item.impact,
+            impactedHoldings: IMPACTED_HOLDINGS_MAP[item.analysisKey] || [],
+            analysisKey: item.analysisKey,
+        };
+
         if (onAskAI) {
-            onAskAI(`How does "${newsTitle}" impact my portfolio?`);
+            onAskAI(`How does "${item.title}" impact my portfolio?`, context);
         }
     };
 
@@ -175,7 +205,7 @@ export const EventList: React.FC<EventListProps> = ({ onAskAI }) => {
 
                                             {/* Ask AI Button */}
                                             <button
-                                                onClick={() => handleAskAI(item.title)}
+                                                onClick={() => handleAskAI(item)}
                                                 style={{
                                                     display: 'inline-flex',
                                                     alignItems: 'center',
