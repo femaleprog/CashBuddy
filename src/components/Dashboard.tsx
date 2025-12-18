@@ -1,177 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Timeline } from './Timeline';
-import { AIAdvisor } from './AIAdvisor';
-import { Gamification } from './Gamification';
-import { Card } from './ui/Card';
-import { Slider } from './ui/Slider';
-import { Button } from './ui/Button';
-import { type FinancialState, type SimulationResult } from '../types';
-import { Play, RefreshCw, TrendingUp } from 'lucide-react';
-
-const INITIAL_STATE: FinancialState = {
-    age: 25,
-    income: 4000,
-    expenses: 2500,
-    savings: 10000,
-    investments: 5000,
-    debt: 0,
-    netWorth: 15000,
-};
+import React, { useState, useEffect, useRef } from 'react';
+import { Sidebar } from './Sidebar';
+import { StockChart } from './StockChart';
+import { EventList } from './EventList';
+import { AIAdvisor, type AIAdvisorHandle } from './AIAdvisor';
+import { Portfolio } from './Portfolio';
+import { generateMockStockData } from '../data/mockStockData';
+import { type StockData } from '../types/stockTypes';
 
 export const Dashboard: React.FC = () => {
-    const [state, setState] = useState<FinancialState>(INITIAL_STATE);
-    const [simulationData, setSimulationData] = useState<SimulationResult[]>([]);
-
-    const runSimulation = () => {
-        const results: SimulationResult[] = [];
-        let currentSavings = state.savings;
-        let currentInvestments = state.investments;
-        let currentAge = state.age;
-        const monthlySavings = state.income - state.expenses;
-
-        for (let i = 0; i < 30 * 12; i++) { // 30 years
-            // Simple compound interest model
-            currentInvestments = currentInvestments * (1 + 0.07 / 12); // 7% annual return
-            currentSavings += monthlySavings;
-
-            // Move excess savings to investments (simplified)
-            if (currentSavings > state.expenses * 6) {
-                const excess = currentSavings - (state.expenses * 6);
-                currentSavings -= excess;
-                currentInvestments += excess;
-            }
-
-            if (i % 12 === 0) {
-                results.push({
-                    month: i,
-                    age: currentAge + Math.floor(i / 12),
-                    savings: Math.round(currentSavings),
-                    investments: Math.round(currentInvestments),
-                    netWorth: Math.round(currentSavings + currentInvestments - state.debt),
-                });
-            }
-        }
-        setSimulationData(results);
-    };
+    const [stockData, setStockData] = useState<{ sp500: StockData; nasdaq: StockData } | null>(null);
+    const [aiMessage, setAiMessage] = useState<string | undefined>();
+    const aiAdvisorRef = useRef<AIAdvisorHandle>(null);
 
     useEffect(() => {
-        runSimulation();
-    }, [state]);
+        const data = generateMockStockData();
+        setStockData(data);
+    }, []);
+
+    const handleAskAI = (question: string) => {
+        setAiMessage(question);
+        // Reset after sending
+        setTimeout(() => setAiMessage(undefined), 100);
+    };
+
+    if (!stockData) {
+        return (
+            <div style={{ minHeight: '100vh', background: '#2A2438', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ color: '#ec4899', fontSize: '20px' }}>Loading...</div>
+            </div>
+        );
+    }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto">
-            <div className="lg:col-span-2 space-y-6">
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-between items-center"
-                >
-                    <div>
-                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-green-400">
-                            Life Simulation
-                        </h1>
-                        <p className="text-muted-foreground">Visualize your financial future</p>
+        <div style={{ minHeight: '100vh', background: '#2A2438', color: '#DBD8E3' }}>
+            {/* CSS Grid Layout */}
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: '240px 1fr 380px',
+                    height: '100vh',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* Sidebar */}
+                <div style={{ height: '100vh', overflowY: 'auto', borderRight: '1px solid rgba(219,216,227,0.08)' }}>
+                    <Sidebar />
+                </div>
+
+                {/* Main Content */}
+                <main style={{
+                    height: '100vh',
+                    overflowY: 'auto',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '24px',
+                }}>
+                    {/* Chart */}
+                    <StockChart sp500={stockData.sp500} nasdaq={stockData.nasdaq} />
+
+                    {/* News + Portfolio Row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', flex: 1, minHeight: 0 }}>
+                        <EventList onAskAI={handleAskAI} />
+                        <Portfolio />
                     </div>
-                    <Button variant="outline" onClick={() => setState(INITIAL_STATE)}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Reset
-                    </Button>
-                </motion.div>
+                </main>
 
-                <Timeline data={simulationData} />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-4 space-y-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="text-primary w-5 h-5" />
-                            <h3 className="font-bold">Income & Expenses</h3>
-                        </div>
-                        <Slider
-                            label="Monthly Income"
-                            valueDisplay={`$${state.income}`}
-                            min={1000}
-                            max={20000}
-                            step={100}
-                            value={state.income}
-                            onChange={(e) => setState({ ...state, income: Number(e.target.value) })}
-                        />
-                        <Slider
-                            label="Monthly Expenses"
-                            valueDisplay={`$${state.expenses}`}
-                            min={500}
-                            max={15000}
-                            step={100}
-                            value={state.expenses}
-                            onChange={(e) => setState({ ...state, expenses: Number(e.target.value) })}
-                        />
-                    </Card>
-
-                    <Card className="p-4 space-y-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Play className="text-primary w-5 h-5" />
-                            <h3 className="font-bold">Assets</h3>
-                        </div>
-                        <Slider
-                            label="Initial Savings"
-                            valueDisplay={`$${state.savings}`}
-                            min={0}
-                            max={100000}
-                            step={1000}
-                            value={state.savings}
-                            onChange={(e) => setState({ ...state, savings: Number(e.target.value) })}
-                        />
-                        <Slider
-                            label="Initial Investments"
-                            valueDisplay={`$${state.investments}`}
-                            min={0}
-                            max={200000}
-                            step={1000}
-                            value={state.investments}
-                            onChange={(e) => setState({ ...state, investments: Number(e.target.value) })}
-                        />
-                    </Card>
+                {/* Right Panel - AI Chat */}
+                <div className="right-panel" style={{ height: '100vh', overflow: 'hidden', padding: '24px', borderLeft: '1px solid rgba(219,216,227,0.08)' }}>
+                    <AIAdvisor ref={aiAdvisorRef} externalMessage={aiMessage} />
                 </div>
             </div>
 
-            <div className="space-y-6">
-                <Gamification state={state} />
-                <AIAdvisor state={state} />
-
-                <Card variant="glass" className="p-4">
-                    <h3 className="font-bold mb-4">Quick Scenarios</h3>
-                    <div className="space-y-2">
-                        <Button
-                            variant="secondary"
-                            className="w-full justify-start"
-                            onClick={() => setState(s => ({ ...s, income: s.income + 500 }))}
-                        >
-                            🚀 Side Hustle (+$500/mo)
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            className="w-full justify-start"
-                            onClick={() => setState(s => ({ ...s, expenses: s.expenses - 200 }))}
-                        >
-                            ☕ Cut Coffee (-$200/mo)
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            className="w-full justify-start"
-                            onClick={() => setState(s => ({ ...s, investments: s.investments + 5000 }))}
-                        >
-                            💰 Inheritance (+$5k)
-                        </Button>
-                    </div>
-                </Card>
-
-                <Card className="p-4 bg-primary/10 border-primary/20">
-                    <h3 className="font-bold text-primary mb-2">Net Worth at 55</h3>
-                    <p className="text-3xl font-bold">
-                        ${simulationData[simulationData.length - 1]?.netWorth.toLocaleString()}
-                    </p>
-                </Card>
-            </div>
+            {/* Responsive Styles */}
+            <style>{`
+        @media (max-width: 1400px) {
+          .grid {
+            grid-template-columns: 240px 1fr !important;
+          }
+          .right-panel {
+            display: none;
+          }
+        }
+      `}</style>
         </div>
     );
 };
