@@ -47,7 +47,7 @@ An AI-powered financial dashboard that helps users track their portfolio, analyz
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/CashBuddy.git
+git clone https://github.com/femaleprog/CashBuddy.git
 
 # Navigate to project directory
 cd CashBuddy
